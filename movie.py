@@ -14,15 +14,21 @@ def search_movie():
 
     global img
 
-    movie_name = search_box.get().strip()
-
-    if movie_name == "":
-        result_label.configure(text="Please enter a movie name")
-        return
 
     try:
+        movie_name = search_box.get().strip()
+
+        if movie_name == "":
+            result_label.configure(text="Please enter a movie name")
+            return
+
         url = f"https://api.themoviedb.org/3/search/movie?api_key={API_KEY}&query={movie_name}"
-        response = requests.get(url)
+        response = requests.get(url, timeout=5)
+
+        if response.status_code != 200:
+            result_label.configure(text="API Error (check key)")
+            return
+
         data = response.json()
 
         if not data.get("results"):
@@ -44,13 +50,14 @@ def search_movie():
         poster_path = movie.get("poster_path")
 
         if poster_path:
+
             img_url = f"https://image.tmdb.org/t/p/w500{poster_path}"
-            img_data = requests.get(img_url).content
+            img_data = requests.get(img_url, timeout=5).content
 
-            img = Image.open(BytesIO(img_data))
-            img = img.resize((250, 350))
+            img_obj = Image.open(BytesIO(img_data)).convert("RGB")
+            img_obj = img_obj.resize((250, 350))
 
-            img = ImageTk.PhotoImage(img)
+            img = ImageTk.PhotoImage(img_obj)
 
             poster_label.configure(image=img, text="")
             poster_label.image = img
